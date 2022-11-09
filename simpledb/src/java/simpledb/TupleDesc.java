@@ -199,7 +199,7 @@ public class TupleDesc implements Serializable {
         // If you want to use TupleDesc as keys for HashMap, implement this so
         // that equal objects have equals hashCode() results
     	
-    	return TDItems.hashCode() * this.getSize();
+    	return TDItems.hashCode();
     	
         // throw new UnsupportedOperationException("unimplemented");
     }
