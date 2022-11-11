@@ -180,7 +180,7 @@ public class TupleDesc implements Serializable {
      *            the Object to be compared for equality with this TupleDesc.
      * @return true if the object is equal to this TupleDesc.
      */
-
+    @Override
     public boolean equals(Object o) {
     	if (o == null)
     		return false;
@@ -194,7 +194,8 @@ public class TupleDesc implements Serializable {
     			return false;
         return true;
     }
-
+    
+    @Override
     public int hashCode() {
         // If you want to use TupleDesc as keys for HashMap, implement this so
         // that equal objects have equals hashCode() results
@@ -211,6 +212,7 @@ public class TupleDesc implements Serializable {
      * 
      * @return String describing this descriptor.
      */
+    @Override
     public String toString() {
     	return TDItems.stream().map(TDItem::toString).collect(Collectors.joining(", "));
     }
