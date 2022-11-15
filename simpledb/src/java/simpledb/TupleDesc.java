@@ -110,8 +110,14 @@ public class TupleDesc implements Serializable {
      *             if i is not a valid field reference.
      */
     public Type getFieldType(int i) throws NoSuchElementException {
-    	TDItem e = this.TDItems.get(i);
-    	return e.fieldType;    }
+    	try {
+    		TDItem e = this.TDItems.get(i);
+    		return e.fieldType;
+    	}
+    	catch (IndexOutOfBoundsException e) {
+    		throw new NoSuchElementException();
+    	}	
+    }
 
     /**
      * Find the index of the field with a given name.
@@ -200,7 +206,12 @@ public class TupleDesc implements Serializable {
         // If you want to use TupleDesc as keys for HashMap, implement this so
         // that equal objects have equals hashCode() results
     	
-    	return TDItems.hashCode();
+    	int hash = 1;
+    	for (int i=0; i < numFields(); i++)
+    		hash = (37 * hash + TDItems.get(i).fieldType.hashCode()) % 1248758669;
+    	hash = (37 * hash + numFields()) % 1248758669;
+    	
+    	return hash;
     	
         // throw new UnsupportedOperationException("unimplemented");
     }

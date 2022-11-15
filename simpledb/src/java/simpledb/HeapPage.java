@@ -66,9 +66,7 @@ public class HeapPage implements Page {
         @return the number of tuples on this page
     */
     private int getNumTuples() {        
-        // some code goes here
-        return 0;
-
+        return (int) Math.floor((BufferPool.getPageSize()*8)/(td.getSize()*8+1));
     }
 
     /**
@@ -76,10 +74,7 @@ public class HeapPage implements Page {
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {        
-        
-        // some code goes here
-        return 0;
-                 
+    	return (int) Math.ceil(numSlots/8);
     }
     
     /** Return a view of this page before it was modified
@@ -111,8 +106,7 @@ public class HeapPage implements Page {
      * @return the PageId associated with this page.
      */
     public HeapPageId getId() {
-    // some code goes here
-    throw new UnsupportedOperationException("implement this");
+    	return pid;
     }
 
     /**
@@ -281,16 +275,25 @@ public class HeapPage implements Page {
      * Returns the number of empty slots on this page.
      */
     public int getNumEmptySlots() {
-        // some code goes here
-        return 0;
+    	int i;
+    	int count=0;
+    	for (byte b : header) {
+    		 for (i=0; i<8; i++) {
+    			 count += (~b>>i & 1);
+    		 }
+    	}
+    	return count;    
     }
 
     /**
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
-        // some code goes here
-        return false;
+    	if (i > numSlots)
+    		return false;
+        int n = i/8;
+        int m = i%8;
+        return ((header[n] >> m) & 1) == 1;
     }
 
     /**
@@ -303,11 +306,33 @@ public class HeapPage implements Page {
 
     /**
      * @return an iterator over all tuples on this page (calling remove on this iterator throws an UnsupportedOperationException)
-     * (note that this iterator shouldn't return tuples in empty slots!)
+     * (note that this iterator shouldn't return tuples in empty slots!) TODO
      */
     public Iterator<Tuple> iterator() {
-        // some code goes here
-        return null;
+        return new Iterator<Tuple>() {
+        	
+        	private int i = -1;
+        	
+			@Override
+			public boolean hasNext() {
+				for (int j=i+1; j<tuples.length; j++) {
+					if (isSlotUsed(j))
+						return true;
+				}
+				return false;				
+			}
+
+			@Override
+			public Tuple next() {
+				Tuple t = null;
+				for (int j=i+1; j<tuples.length; j++)
+					if (isSlotUsed(j)) {
+						i = j;
+						t = tuples[i];
+						break;
+					}
+				return t;
+			}};
     }
 
 }
