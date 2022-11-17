@@ -1,4 +1,5 @@
 package simpledb;
+import java.nio.Buffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
@@ -7,9 +8,11 @@ public class HeapFileIterator implements DbFileIterator {
     private TransactionId tid;
     private int nextPageNumber;
     private Iterator<Tuple> iterator;
+    private BufferPool buffer;
     public HeapFileIterator(HeapFile hf, TransactionId tid){
         this.hf = hf;
         this.tid = tid;
+        this.buffer = Database.getBufferPool();
         this.close();
     }
     public void open() throws DbException, TransactionAbortedException {
@@ -41,7 +44,12 @@ public class HeapFileIterator implements DbFileIterator {
     }
     private void nextIterator() {
         HeapPageId pid = new HeapPageId(this.hf.getId(), this.nextPageNumber++);
-        HeapPage hp = (HeapPage) this.hf.readPage(pid);
-        this.iterator = hp.iterator();
+        // HeapPage hp = (HeapPage) this.hf.readPage(pid);
+        try{
+            HeapPage hp = (HeapPage) this.buffer.getPage(this.tid, pid, null);
+            this.iterator = hp.iterator();
+        }catch(TransactionAbortedException exception){
+        }catch(DbException exception){
+        }
     }
 }
