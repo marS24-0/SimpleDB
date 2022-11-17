@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The Catalog keeps track of all available tables in the database and their
@@ -26,10 +26,10 @@ public class Catalog {
      * Creates a new, empty catalog.
      */
     public Catalog() {
-        this.nameIdCatalog = new HashMap<>();
-        this.idNameCatalog = new HashMap<>();
-        this.idDbfileCatalog = new HashMap<>();
-        this.idPkCatalog = new HashMap<>();
+        this.nameIdCatalog = new ConcurrentHashMap<>();
+        this.idNameCatalog = new ConcurrentHashMap<>();
+        this.idDbfileCatalog = new ConcurrentHashMap<>();
+        this.idPkCatalog = new ConcurrentHashMap<>();
     }
 
     /**
@@ -75,6 +75,9 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
+        if(name == null){
+            throw new NoSuchElementException();
+        }
         Integer tableId = this.nameIdCatalog.get(name);
         if(tableId == null){
             throw new NoSuchElementException();
