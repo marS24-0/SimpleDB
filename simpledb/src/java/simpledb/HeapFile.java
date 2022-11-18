@@ -69,16 +69,16 @@ public class HeapFile implements DbFile {
         if(pid.getPageNumber() >= this.nPages){
             throw new IllegalArgumentException("Page does not exist");
         }
-        int pageOffset = pid.getPageNumber() * BufferPool.getPageSize(); // TODO: check getPageNumber
+        int pageOffset = pid.getPageNumber() * BufferPool.getPageSize();
         byte[] data = new byte[BufferPool.getPageSize()];
         try{
             RandomAccessFile randomAccessFile = new RandomAccessFile(this.file, "r");
             randomAccessFile.seek(pageOffset);
             randomAccessFile.read(data);
             randomAccessFile.close();
-            // HeapPageId hpid = new HeapPageId(this.id, pid.getPageNumber()); // TODO: something with this line
-            // return new HeapPage(hpid, data);
-            return new HeapPage((HeapPageId) pid, data);
+            // return new HeapPage((HeapPageId) pid, data);
+            HeapPageId hpid = new HeapPageId(this.id, pid.getPageNumber());
+            return new HeapPage(hpid, data);
         }catch(FileNotFoundException exception){
             throw new IllegalArgumentException("File not found");
         }catch(IOException exception){

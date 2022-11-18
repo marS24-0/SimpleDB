@@ -44,7 +44,6 @@ public class HeapFileIterator implements DbFileIterator {
     }
     private void nextIterator() {
         HeapPageId pid = new HeapPageId(this.hf.getId(), this.nextPageNumber++);
-        // HeapPage hp = (HeapPage) this.hf.readPage(pid);
         try{
             HeapPage hp = (HeapPage) this.buffer.getPage(this.tid, pid, null);
             this.iterator = hp.iterator();

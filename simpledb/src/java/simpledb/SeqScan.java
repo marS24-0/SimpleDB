@@ -36,7 +36,6 @@ public class SeqScan implements OpIterator {
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
         this.tid = tid;
         this.reset(tableid, tableAlias);
-        // some code goes here, maybe
     }
 
     /**
@@ -79,7 +78,6 @@ public class SeqScan implements OpIterator {
         }
         this.dbFile = Database.getCatalog().getDatabaseFile(this.tableid);
         this.iterator = this.dbFile.iterator(this.tid);
-        // some code goes here, maybe
     }
 
     public SeqScan(TransactionId tid, int tableId) {
@@ -101,7 +99,6 @@ public class SeqScan implements OpIterator {
      *         prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
         TupleDesc tupleDesc = this.dbFile.getTupleDesc();
         int numFields = tupleDesc.numFields();
         Type[] typeAr = new Type[numFields];
