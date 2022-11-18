@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="simpledb/src/java"/>
+	<classpathentry kind="src" path="simpledb/test"/>
+	<classpathentry kind="lib" path="simpledb/lib/ant-contrib-1.0b3.jar"/>
+	<classpathentry kind="lib" path="simpledb/lib/jline-0.9.94.jar"/>
+	<classpathentry kind="lib" path="simpledb/lib/junit-4.5.jar"/>
+	<classpathentry kind="lib" path="simpledb/lib/zql.jar"/>
+	<classpathentry kind="output" path="simpledb/bin/src"/>
+</classpath>

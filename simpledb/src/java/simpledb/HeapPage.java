@@ -73,8 +73,8 @@ public class HeapPage implements Page {
      * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
-    private int getHeaderSize() {        
-    	return (int) Math.ceil(numSlots/8);
+    private int getHeaderSize() {
+    	return (int) Math.ceil((double)numSlots/8);
     }
     
     /** Return a view of this page before it was modified
@@ -306,7 +306,7 @@ public class HeapPage implements Page {
 
     /**
      * @return an iterator over all tuples on this page (calling remove on this iterator throws an UnsupportedOperationException)
-     * (note that this iterator shouldn't return tuples in empty slots!) TODO
+     * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> iterator() {
         return new Iterator<Tuple>() {
