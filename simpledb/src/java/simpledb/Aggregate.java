@@ -11,6 +11,17 @@ public class Aggregate extends Operator {
 
     private static final long serialVersionUID = 1L;
 
+    private OpIterator child;
+    private int afield;
+    private int gfield;
+    private Aggregator.Op aop;
+    private TupleDesc td_in;
+    private TupleDesc td_out;
+    private Field groupByField;
+    
+    private Aggregator agg;
+    private OpIterator it;
+    
     /**
      * Constructor.
      * 
@@ -30,7 +41,23 @@ public class Aggregate extends Operator {
      *            The aggregation operator to use
      */
     public Aggregate(OpIterator child, int afield, int gfield, Aggregator.Op aop) {
-	// some code goes here
+    	this.child = child;
+    	this.afield = afield;
+    	this.gfield = gfield;
+    	this.aop = aop;
+    	this.td_in = child.getTupleDesc();
+    	if (gfield==-1) {
+    		String fieldName = "*";
+    		this.td_out = new TupleDesc(new Type[] {Type.INT_TYPE}, new String[] {aop.toString() + " (" + fieldName + ")"});
+    	}
+    	else {
+    		String fieldName = td_in.getFieldName(gfield);
+    		this.td_out = new TupleDesc(new Type[] {td_in.getFieldType(gfield), Type.INT_TYPE}, new String[] {fieldName, aop.toString() + " (" + fieldName + ")"});
+    	}
+    	if (td_in.getFieldType(afield)==Type.INT_TYPE)
+    		agg = new IntegerAggregator(gfield, td_in.getFieldType(gfield), afield, aop);
+    	else if (td_in.getFieldType(afield)==Type.STRING_TYPE)
+    		agg = new StringAggregator(gfield, td_in.getFieldType(gfield), afield, aop);    		
     }
 
     /**
@@ -39,8 +66,9 @@ public class Aggregate extends Operator {
      *         {@link simpledb.Aggregator#NO_GROUPING}
      * */
     public int groupField() {
-	// some code goes here
-	return -1;
+		if (gfield!=-1)
+			return gfield;
+		return Aggregator.NO_GROUPING;
     }
 
     /**
@@ -49,16 +77,14 @@ public class Aggregate extends Operator {
      *         null;
      * */
     public String groupFieldName() {
-	// some code goes here
-	return null;
+    	return td_in.getFieldName(gfield);
     }
 
     /**
      * @return the aggregate field
      * */
     public int aggregateField() {
-	// some code goes here
-	return -1;
+		return afield;
     }
 
     /**
@@ -66,16 +92,14 @@ public class Aggregate extends Operator {
      *         tuples
      * */
     public String aggregateFieldName() {
-	// some code goes here
-	return null;
+		return td_in.getFieldName(afield);
     }
 
     /**
      * @return return the aggregate operator
      * */
     public Aggregator.Op aggregateOp() {
-	// some code goes here
-	return null;
+		return aop;
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
@@ -84,7 +108,15 @@ public class Aggregate extends Operator {
 
     public void open() throws NoSuchElementException, DbException,
 	    TransactionAbortedException {
-	// some code goes here
+    	child.open();
+    	super.open();
+    	while (child.hasNext()) {
+    		Tuple t = child.next();
+    		agg.mergeTupleIntoGroup(t);
+    	}
+    	it = agg.iterator();
+    	it.open();
+    	child.close();
     }
 
     /**
@@ -95,12 +127,14 @@ public class Aggregate extends Operator {
      * aggregate. Should return null if there are no more tuples.
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-	// some code goes here
-	return null;
+    	if (it.hasNext()) {
+    		return it.next();
+    	}
+    	return null;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-	// some code goes here
+		it.rewind();
     }
 
     /**
@@ -115,23 +149,22 @@ public class Aggregate extends Operator {
      * iterator.
      */
     public TupleDesc getTupleDesc() {
-	// some code goes here
-	return null;
+		return td_out;
     }
 
     public void close() {
-	// some code goes here
+    	it.close();
+		super.close();
     }
 
     @Override
     public OpIterator[] getChildren() {
-	// some code goes here
-	return null;
+    	return new OpIterator[] {child};
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
-	// some code goes here
+		child = children[0];
     }
     
 }
