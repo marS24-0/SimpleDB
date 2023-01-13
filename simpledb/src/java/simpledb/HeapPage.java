@@ -256,6 +256,7 @@ public class HeapPage implements Page {
      * @param t The tuple to add.
      */
     public void insertTuple(Tuple t) throws DbException {
+
         if (getNumEmptySlots()==0)
         	throw new DbException("Page is full");
         TupleDesc td = t.getTupleDesc();

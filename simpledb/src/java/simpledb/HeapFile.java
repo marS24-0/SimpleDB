@@ -62,9 +62,6 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) throws IllegalArgumentException {
-    	
-    	System.out.println(pid.getPageNumber() + " " + numPages());
-    	
     	int tableId = pid.getTableId();
         int pgNo = pid.getPageNumber();
         byte[] rawPgData = HeapPage.createEmptyPageData();
@@ -106,10 +103,10 @@ public class HeapFile implements DbFile {
     	ArrayList<Page> modifiedPages = new ArrayList<>();
     	boolean pageFound = false;
     	
-    	System.out.println(numPages());
     	for (int i = 0; i < numPages() && !pageFound; i++) {
     		HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(getId(), i), Permissions.READ_WRITE);
     		if (p.getNumEmptySlots() > 0) {
+    			pageFound = true;
     			p.insertTuple(t);
     			modifiedPages.add(p);
     			p.markDirty(true, tid);
