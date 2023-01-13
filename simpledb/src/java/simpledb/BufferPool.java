@@ -149,12 +149,6 @@ public class BufferPool {
         ArrayList<Page> dirtyPages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
         for(Page page : dirtyPages){
             page.markDirty(true, tid);
-            if(page.getId() != t.getRecordId().getPageId()){
-                System.out.print(page.getId());
-                System.out.print(" ");
-                System.out.println(t.getRecordId().getPageId());
-                // System.out.println(page.getId() == t.getRecordId().getPageId());
-            }
         }
     }
 
@@ -178,8 +172,6 @@ public class BufferPool {
         for(Page page : dirtyPages){
             page.markDirty(true, tid);
         }
-        // some code goes here
-        // not necessary for lab1
     }
 
     /**
