@@ -9,7 +9,12 @@ import java.io.IOException;
 public class Delete extends Operator {
 
     private static final long serialVersionUID = 1L;
-
+    
+    private TransactionId transaction;
+    private OpIterator child;
+    private TupleDesc td;
+    private boolean deleted = false;
+    
     /**
      * Constructor specifying the transaction that this delete belongs to as
      * well as the child to read from.
@@ -20,24 +25,27 @@ public class Delete extends Operator {
      *            The child operator from which to read tuples for deletion
      */
     public Delete(TransactionId t, OpIterator child) {
-        // some code goes here
+        transaction = t;
+        this.child = child;
+        td = new TupleDesc(new Type[] {Type.INT_TYPE}, new String[] {"Inserted records"});
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return td;
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        // some code goes here
+        child.open();
+        super.open();
     }
 
     public void close() {
-        // some code goes here
+        child.close();
+        super.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        child.rewind();
     }
 
     /**
@@ -50,9 +58,25 @@ public class Delete extends Operator {
      * @see BufferPool#deleteTuple
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
-    }
+    	if (!deleted) {
+        	Tuple t = new Tuple(td);
+        	int deletedTuples = 0;
+        	
+            while(child.hasNext()) {
+            	Tuple n = child.next();
+            	try {
+    				Database.getBufferPool().deleteTuple(transaction, n);
+    				deletedTuples++;
+    			} catch (IOException e) {
+    				e.printStackTrace();
+    			};
+            }
+            deleted = true;
+        	t.setField(0, new IntField(deletedTuples));
+        	return t;
+    	}
+    	return null;    	
+	}
 
     @Override
     public OpIterator[] getChildren() {

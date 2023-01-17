@@ -108,8 +108,8 @@ public class HeapFile implements DbFile {
     		if (p.getNumEmptySlots() > 0) {
     			pageFound = true;
     			p.insertTuple(t);
-    			modifiedPages.add(p);
     			p.markDirty(true, tid);
+    			modifiedPages.add(p);
     		}
     	}
     	
