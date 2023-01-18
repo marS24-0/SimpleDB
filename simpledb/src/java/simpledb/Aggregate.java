@@ -49,15 +49,21 @@ public class Aggregate extends Operator {
     	if (gfield==-1) {
     		String fieldName = "*";
     		this.td_out = new TupleDesc(new Type[] {Type.INT_TYPE}, new String[] {aop.toString() + " (" + fieldName + ")"});
+//    		this.td_out = new TupleDesc(new Type[] {Type.INT_TYPE}, new String[] {null});
+        	if (td_in.getFieldType(afield)==Type.INT_TYPE)
+        		agg = new IntegerAggregator(gfield, null, afield, aop);
+        	else if (td_in.getFieldType(afield)==Type.STRING_TYPE)
+        		agg = new StringAggregator(gfield, null, afield, aop);
     	}
     	else {
     		String fieldName = td_in.getFieldName(gfield);
     		this.td_out = new TupleDesc(new Type[] {td_in.getFieldType(gfield), Type.INT_TYPE}, new String[] {fieldName, aop.toString() + " (" + fieldName + ")"});
+    		if (td_in.getFieldType(afield)==Type.INT_TYPE)
+        		agg = new IntegerAggregator(gfield, td_in.getFieldType(gfield), afield, aop);
+        	else if (td_in.getFieldType(afield)==Type.STRING_TYPE)
+        		agg = new StringAggregator(gfield, td_in.getFieldType(gfield), afield, aop); 
     	}
-    	if (td_in.getFieldType(afield)==Type.INT_TYPE)
-    		agg = new IntegerAggregator(gfield, td_in.getFieldType(gfield), afield, aop);
-    	else if (td_in.getFieldType(afield)==Type.STRING_TYPE)
-    		agg = new StringAggregator(gfield, td_in.getFieldType(gfield), afield, aop);    		
+    	   		
     }
 
     /**

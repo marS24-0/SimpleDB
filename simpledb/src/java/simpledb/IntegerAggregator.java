@@ -82,6 +82,7 @@ public class IntegerAggregator implements Aggregator {
 			groupByField = new StringField("", 0);
 			fieldName = "*";
 			td = new TupleDesc(new Type[] {Type.INT_TYPE}, new String[] {what.toString() + " (" + fieldName + ")"});
+//			td = new TupleDesc(new Type[] {Type.INT_TYPE}, new String[] {null});
 		} else {
     		groupByField = tup.getField(gbfield);
     		fieldName = tup.getTupleDesc().getFieldName(gbfield);
