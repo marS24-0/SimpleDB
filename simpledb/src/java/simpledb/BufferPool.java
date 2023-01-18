@@ -4,6 +4,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.junit.internal.builders.NullBuilder;
+
 /**
  * BufferPool manages the reading and writing of pages into memory from
  * disk. Access methods call into it to retrieve pages, and it fetches
@@ -29,6 +31,7 @@ public class BufferPool {
     private int numPages;
     private int pageCount;
     private ConcurrentHashMap<PageId, Page> pages;
+    private Stack<PageId> mruStack = new Stack<>();
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -74,6 +77,7 @@ public class BufferPool {
         throws TransactionAbortedException, DbException {
     	
     	Page page = pages.get(pid);
+        this.mruStack.push(pid);
     	if (page == null) {		
 	    	if (pageCount >= numPages)
 	    		throw new DbException("More than " + String.valueOf(numPages) + " requests.");
@@ -181,8 +185,9 @@ public class BufferPool {
      */
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
-        // not necessary for lab1
-
+        for(PageId pid : this.pages.keySet()){
+            this.flushPage(pid);
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -195,7 +200,8 @@ public class BufferPool {
     */
     public synchronized void discardPage(PageId pid) {
         // some code goes here
-        // not necessary for lab1
+        this.pages.remove(pid);
+        this.pageCount--;
     }
 
     /**
@@ -204,7 +210,11 @@ public class BufferPool {
      */
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
-        // not necessary for lab1
+        Page page = this.pages.get(pid);
+        if(page.isDirty() == null){
+            Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(page);
+            page.markDirty(false, null);
+        }
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -220,7 +230,22 @@ public class BufferPool {
      */
     private synchronized  void evictPage() throws DbException {
         // some code goes here
-        // not necessary for lab1
+        PageId mru;
+        while(!this.mruStack.empty() && this.pages.get(this.mruStack.peek()) == null){
+            this.mruStack.pop();
+        }
+        if(!this.mruStack.empty()){
+            mru = this.mruStack.pop();
+            try{
+                this.flushPage(mru);
+                this.pages.remove(mru);
+                this.pageCount--;
+            }catch(IOException e){
+                throw new DbException(e.toString());
+            }
+        }else{
+            throw new DbException(null);
+        }
     }
 
 }
