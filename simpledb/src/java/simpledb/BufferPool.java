@@ -211,7 +211,7 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         Page page = this.pages.get(pid);
-        if(page.isDirty() == null){
+        if(page.isDirty() != null){
             Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(page);
             page.markDirty(false, null);
         }
