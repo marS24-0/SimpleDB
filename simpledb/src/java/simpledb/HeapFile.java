@@ -120,7 +120,7 @@ public class HeapFile implements DbFile {
     		HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, newPageId, Permissions.READ_WRITE);
             p.insertTuple(t);
             p.markDirty(true, tid);
-            modifiedPages.add(newPage);
+            modifiedPages.add(p);
     	}
     	return modifiedPages;
     }
