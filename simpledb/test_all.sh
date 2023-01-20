@@ -16,6 +16,14 @@ do
 done | egrep '(FAILED|SUCCESSFUL)'
 
 echo
+echo "-- other tests from pdf --"
+for i in DeleteTest
+do
+    echo "$i" 1>&2
+    ant runsystest -Dtest=$i
+done | egrep '(FAILED|SUCCESSFUL)'
+
+echo
 echo "-- jointestexample --"
 ant
 java -classpath dist/simpledb.jar simpledb.jointestexample
