@@ -141,10 +141,77 @@ public class HeapFile implements DbFile {
     	pageList.add(p);
     	return pageList;
     }
+    
+    private class HeapFileIterator implements DbFileIterator {
+
+        private Integer pageCursor;
+        private Iterator<Tuple> tupleIterator;
+        private final TransactionId transactionId;
+        private final int tableId;
+        private final int numPages;
+
+        public HeapFileIterator(TransactionId tid) {
+          this.pageCursor = null;
+          this.tupleIterator = null;
+          this.transactionId = tid;
+          this.tableId = getId();
+          this.numPages = numPages();
+        }
+
+        private Iterator<Tuple> getTupleIterator(int pageNumber) throws TransactionAbortedException, DbException {
+          PageId pid = new HeapPageId(tableId, pageNumber);
+          return ((HeapPage) Database.getBufferPool().getPage(transactionId, pid, Permissions.READ_ONLY)).iterator();
+        }
+
+        @Override
+        public void open() throws DbException, TransactionAbortedException {
+          pageCursor = 0;
+          tupleIterator = getTupleIterator(pageCursor);
+        }
+
+        @Override
+        public boolean hasNext() throws DbException, TransactionAbortedException {
+          if (pageCursor != null) {
+            while (pageCursor < numPages - 1) {
+              if (tupleIterator.hasNext()) {
+                return true;
+              } else {
+                pageCursor += 1;
+                tupleIterator = getTupleIterator(pageCursor);
+              }
+            }
+            return tupleIterator.hasNext();
+          } else {
+            return false;
+          }
+        }
+
+        @Override
+        public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
+          if (hasNext()) {
+            return tupleIterator.next();
+          }
+          throw new NoSuchElementException("HeapFileIterator error: no more elements");
+        }
+
+        @Override
+        public void rewind() throws DbException, TransactionAbortedException {
+          close();
+          open();
+        }
+
+        @Override
+        public void close() {
+          pageCursor = null;
+          tupleIterator = null;
+        }
+
+      }
 
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
-        return new HeapFileIterator(this, tid);
+//        return new HeapFileIterator(this, tid);
+        return new HeapFileIterator(tid);
     }
 
 }
