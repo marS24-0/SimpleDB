@@ -4,8 +4,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.junit.internal.builders.NullBuilder;
-
 /**
  * BufferPool manages the reading and writing of pages into memory from
  * disk. Access methods call into it to retrieve pages, and it fetches
@@ -31,7 +29,12 @@ public class BufferPool {
     private int numPages;
     private int pageCount;
     private ConcurrentHashMap<PageId, Page> pages;
-    private Stack<PageId> mruStack = new Stack<>();
+    // private Stack<PageId> mruStack = new Stack<>();
+    private int k = 2; // LRU-k, maximum 1023
+    private long access_time;
+    private HashMap<Long, Queue<Long>> history;
+    private TreeMap<Long, PageId> timePage;
+    private HashMap<PageId, Long> pageTime;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -42,6 +45,10 @@ public class BufferPool {
         this.numPages = numPages;
         this.pageCount = 0;
         this.pages = new ConcurrentHashMap<PageId, Page>();
+        access_time = 0;
+        history = new HashMap<>();
+        timePage = new TreeMap<>();
+        pageTime = new HashMap<>();
     }
     
     public static int getPageSize() {
@@ -75,17 +82,35 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-    	
     	Page page = pages.get(pid);
-        this.mruStack.push(pid);
     	if (page == null) {		
-	    	if (pageCount >= numPages)
-	    		throw new DbException("More than " + String.valueOf(numPages) + " requests.");
+	    	// if (pageCount >= numPages)
+	    	// 	throw new DbException("More than " + String.valueOf(numPages) + " requests.");
+            while(pageCount >= numPages){
+                this.evictPage();
+            }
 	    	DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
 	    	page = file.readPage(pid);
 	    	pages.put(pid, page);
 	    	pageCount++;
 	    }
+    	Long tn, t = this.pageTime.get(pid);
+        Queue<Long> lruh;
+        if(t == null){
+            lruh = new LinkedList<Long>();
+            for(int i=0; i<this.k; i++){
+                lruh.add((i<<53) | this.access_time); // first 10 bits are used to count the number of accesses
+            }
+        }else{
+            lruh = this.history.get(t);
+            this.history.remove(t);
+            this.timePage.remove(t);
+        }
+        lruh.add(((this.k-1)<<53) | this.access_time++);
+        tn = lruh.remove();
+        this.history.put(tn, lruh);
+        this.pageTime.put(pid, tn);
+        this.timePage.put(tn, pid);
     	return page;
     }
 
@@ -200,6 +225,10 @@ public class BufferPool {
     */
     public synchronized void discardPage(PageId pid) {
         // some code goes here
+        Long t = this.pageTime.get(pid);
+        this.timePage.remove(t);
+        this.history.remove(t);
+        this.pageTime.remove(pid);
         this.pages.remove(pid);
         this.pageCount--;
     }
@@ -230,21 +259,12 @@ public class BufferPool {
      */
     private synchronized  void evictPage() throws DbException {
         // some code goes here
-        PageId mru;
-        while(!this.mruStack.empty() && this.pages.get(this.mruStack.peek()) == null){
-            this.mruStack.pop();
-        }
-        if(!this.mruStack.empty()){
-            mru = this.mruStack.pop();
-            try{
-                this.flushPage(mru);
-                this.pages.remove(mru);
-                this.pageCount--;
-            }catch(IOException e){
-                throw new DbException(e.toString());
-            }
-        }else{
-            throw new DbException(null);
+        PageId lruk = this.timePage.firstEntry().getValue();
+        try{
+            this.flushPage(lruk);
+            this.discardPage(lruk);
+        }catch(IOException e){
+            throw new DbException(e.toString());
         }
     }
 
