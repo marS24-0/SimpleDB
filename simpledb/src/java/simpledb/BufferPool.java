@@ -178,6 +178,7 @@ public class BufferPool {
         ArrayList<Page> dirtyPages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
         for(Page page : dirtyPages){
             page.markDirty(true, tid);
+            pages.put(page.getId(), page);
         }
     }
 
@@ -240,10 +241,8 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         Page page = this.pages.get(pid);
-        if(page.isDirty() != null){
-            Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(page);
-            page.markDirty(false, null);
-        }
+        Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(page);
+        page.markDirty(false, null);
     }
 
     /** Write all pages of the specified transaction to disk.
